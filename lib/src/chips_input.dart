@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:web_gl';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'suggestions_box_controller.dart';
 import 'text_cursor.dart';
+import 'package:flutter/foundation.dart';
 
 typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
+typedef CreateChip<T> = T? Function(String data);
 
 const kObjectReplacementChar = 0xFFFD;
 
@@ -51,6 +54,7 @@ class ChipsInput<T> extends StatefulWidget {
     this.allowChipEditing = false,
     this.focusNode,
     this.initialSuggestions,
+    required this.createChip,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
@@ -75,6 +79,7 @@ class ChipsInput<T> extends StatefulWidget {
   final bool allowChipEditing;
   final FocusNode? focusNode;
   final List<T>? initialSuggestions;
+  final CreateChip<T> createChip;
 
   // final Color cursorColor;
 
@@ -352,7 +357,10 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
             composing: TextRange.empty,
           ));
     }
-    _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
+    if (!kIsWeb) {
+      _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
+    }
+    // _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
     _textInputConnection ??= TextInput.attach(this, textInputConfiguration);
     _textInputConnection?.setEditingState(_value);
   }
@@ -367,8 +375,22 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
         if (_suggestions?.isNotEmpty ?? false) {
           selectSuggestion(_suggestions!.first as T);
         } else {
-          _effectiveFocusNode.unfocus();
+          // _effectiveFocusNode.unfocus();
         }
+        final chipToAdd = widget.createChip(
+          _value.normalCharactersText,
+        );
+        if (chipToAdd != null) {
+          setState(
+            () => _chips = _chips
+              ..add(
+                chipToAdd,
+              ),
+          );
+          _updateTextInputState(replaceText: true);
+          widget.onChanged(_chips.toList(growable: false));
+        }
+
         break;
       default:
         _effectiveFocusNode.unfocus();
