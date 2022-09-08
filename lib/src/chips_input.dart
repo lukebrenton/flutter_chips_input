@@ -131,6 +131,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   void initState() {
     super.initState();
     _chips.addAll(widget.initialValue);
+    _updateTextInputState(replaceText: true);
     _suggestions = widget.initialSuggestions
         ?.where((r) => !_chips.contains(r))
         .toList(growable: false);
