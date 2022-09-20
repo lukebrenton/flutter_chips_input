@@ -14,6 +14,7 @@ typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
 typedef CreateChip<T> = T? Function(String data);
+typedef OnPaste<T> = T? Function(String data);
 
 const kObjectReplacementChar = 0xFFFD;
 
@@ -30,32 +31,33 @@ extension on TextEditingValue {
 }
 
 class ChipsInput<T> extends StatefulWidget {
-  const ChipsInput({
-    Key? key,
-    this.initialValue = const [],
-    this.decoration = const InputDecoration(),
-    this.enabled = true,
-    required this.chipBuilder,
-    required this.suggestionBuilder,
-    required this.findSuggestions,
-    required this.onChanged,
-    this.maxChips,
-    this.textStyle,
-    this.suggestionsBoxMaxHeight,
-    this.inputType = TextInputType.text,
-    this.textOverflow = TextOverflow.clip,
-    this.obscureText = false,
-    this.autocorrect = true,
-    this.actionLabel,
-    this.inputAction = TextInputAction.done,
-    this.keyboardAppearance = Brightness.light,
-    this.textCapitalization = TextCapitalization.none,
-    this.autofocus = false,
-    this.allowChipEditing = false,
-    this.focusNode,
-    this.initialSuggestions,
-    required this.createChip,
-  })  : assert(maxChips == null || initialValue.length <= maxChips),
+  const ChipsInput(
+      {Key? key,
+      this.initialValue = const [],
+      this.decoration = const InputDecoration(),
+      this.enabled = true,
+      required this.chipBuilder,
+      required this.suggestionBuilder,
+      required this.findSuggestions,
+      required this.onChanged,
+      this.maxChips,
+      this.textStyle,
+      this.suggestionsBoxMaxHeight,
+      this.inputType = TextInputType.text,
+      this.textOverflow = TextOverflow.clip,
+      this.obscureText = false,
+      this.autocorrect = true,
+      this.actionLabel,
+      this.inputAction = TextInputAction.done,
+      this.keyboardAppearance = Brightness.light,
+      this.textCapitalization = TextCapitalization.none,
+      this.autofocus = false,
+      this.allowChipEditing = false,
+      this.focusNode,
+      this.initialSuggestions,
+      required this.createChip,
+      required this.onPaste})
+      : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
   final InputDecoration decoration;
@@ -80,6 +82,7 @@ class ChipsInput<T> extends StatefulWidget {
   final FocusNode? focusNode;
   final List<T>? initialSuggestions;
   final CreateChip<T> createChip;
+  final OnPaste<T> onPaste;
 
   // final Color cursorColor;
 
@@ -269,6 +272,18 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
     }
   }
 
+  void addChips(Iterable<T> data) {
+    if (!_hasReachedMaxChips) {
+      setState(() {
+        _chips = _chips..addAll(data);
+      });
+      _updateTextInputState(replaceText: true);
+      widget.onChanged(_chips.toList(growable: false));
+    } else {
+      _suggestionsBoxController.close();
+    }
+  }
+
   void deleteChip(T data) {
     if (widget.enabled) {
       setState(() => _chips.remove(data));
@@ -321,7 +336,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    //print("updateEditingValue FIRED with ${value.text}");
+    // print("updateEditingValue FIRED with ${value.text}");
     // _receivedRemoteTextEditingValue = value;
     final oldTextEditingValue = _value;
     if (value.text != oldTextEditingValue.text) {
@@ -338,6 +353,10 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           _enteredTexts.remove(removedChip);
         }
         _updateTextInputState(putText: putText);
+      } else if (value.text.length > oldTextEditingValue.text.length + 1) {
+        widget.onPaste(
+          _value.normalCharactersText,
+        );
       } else {
         _updateTextInputState();
       }
