@@ -55,8 +55,9 @@ class ChipsInput<T> extends StatefulWidget {
       this.focusNode,
       this.initialSuggestions,
       required this.createChip,
-      required this.onPaste})
-      : assert(maxChips == null || initialValue.length <= maxChips),
+      required this.onPaste,
+      this.trailing,
+     }) : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
   final InputDecoration decoration;
@@ -82,6 +83,7 @@ class ChipsInput<T> extends StatefulWidget {
   final List<T>? initialSuggestions;
   final CreateChip<T> createChip;
   final OnPaste<T> onPaste;
+  final Widget? trailing;
 
   // final Color cursorColor;
 
@@ -511,12 +513,19 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
                 decoration: widget.decoration,
                 isFocused: _effectiveFocusNode.hasFocus,
                 isEmpty: _value.text.isEmpty && _chips.isEmpty,
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4.0,
-                  runSpacing: 4.0,
-                  children: chipsChildren,
-                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4.0,
+                        runSpacing: 4.0,
+                        children: chipsChildren,
+                      ),
+                    ),
+                    widget.trailing ?? Container(),
+                  ],
+                )
               ),
             ),
             CompositedTransformTarget(
