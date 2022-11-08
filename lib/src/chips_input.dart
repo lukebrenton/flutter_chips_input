@@ -378,13 +378,14 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
             composing: TextRange.empty,
           ));
     }
-    if (!kIsWeb) {
-      _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
-    }
-    // _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
-    if (_effectiveFocusNode.hasFocus) {
-      _textInputConnection ??= TextInput.attach(this, textInputConfiguration);
-    }
+    // SK removed as it causes the android @ problem
+    //     if (!kIsWeb) {
+    //       _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
+    //     }
+    //     // _closeInputConnectionIfNeeded(); //Hack for #34 (https://github.com/danvick/flutter_chips_input/issues/34#issuecomment-684505282). TODO: Find permanent fix
+    //     if (_effectiveFocusNode.hasFocus) {
+    //       _textInputConnection ??= TextInput.attach(this, textInputConfiguration);
+    //     }
     _textInputConnection?.setEditingState(_value);
     _textInputConnection?.show();
   }
